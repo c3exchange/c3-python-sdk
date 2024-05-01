@@ -23,8 +23,8 @@ py-algorand-sdk = "^2.5.0"
 web3 = "^6.11.0"
 msgpack = "^1.0.7"
 asyncio = "^3.4.3"
-python-socketio = "^5.10"
 pycryptodome = "^3.19.0"
+ websockets = "^12.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.5.0"
