@@ -242,8 +242,11 @@ class Account(ApiClient):
         return orderResponse
 
     def cancelMarketOrders(
-        self, marketId: str, all_orders_until: int = int(time.time() * 1000)
+        self, marketId: str, all_orders_until = None
     ):
+        if all_orders_until is None:
+            all_orders_until = int(time.time() * 1000)
+        
         cancelSignatureRequest = CancelSignatureRequest(
             op=RequestOperation.Cancel,
             all_orders_until=all_orders_until,
