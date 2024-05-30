@@ -15,7 +15,13 @@ This SDK is provided "as is", without warranty of any kind, express or implied. 
 poetry install
 ```
 
-**2. Tests**
+**2. Requirements**
+
+pip install py-algorand-sdk
+pip install pycryptodome
+pip install web3
+
+**3. Tests**
 
 to-do
 
