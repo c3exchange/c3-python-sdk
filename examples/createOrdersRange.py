@@ -263,6 +263,6 @@ def getUSDTActiveBuyOrders(self, limit=100, priceFrom=None, priceTo=None):
 
 
 
-#import c3_trade
-#c3_trade.placeSellOrders('PYTH-USDC', 0.5, 0.6, 1000, 100, 300)
-#c3_trade.placeBuyOrders('PYTH-USDC', 0.2, 0.3, 1000, 100, 300)
+#import createOrdersRange
+#createOrdersRange.placeSellOrders('PYTH-USDC', 0.5, 0.6, 1000, 100, 300)
+#createOrdersRange.placeBuyOrders('PYTH-USDC', 0.2, 0.3, 1000, 100, 300)
