@@ -10,7 +10,6 @@ import websockets
 
 logger = logging.getLogger("websocket-client")
 
-
 class WebSocketClientEvent(Enum):
     Connect = "connected"
     Level1 = "level1"
@@ -19,7 +18,6 @@ class WebSocketClientEvent(Enum):
     OpenOrders = "openOrders"
     Cancels = "cancels"
     Trades = "trades"
-
 
 class MessageType(Enum):
     MESSAGE = "message"
@@ -31,12 +29,10 @@ class MessageType(Enum):
     PONG = "pong"
     PING = "ping"
 
-
 class RequestMethod(Enum):
-    SUBSCRIBE = "subscribe"
-    UNSUBSCRIBE = "unsubscribe"
-    LIST_SUBSCRIPTIONS = "listSubscriptions"
-
+    SUBSCRIBE = "SUBSCRIBE"
+    UNSUBSCRIBE = "UNSUBSCRIBE"
+    LIST_SUBSCRIPTIONS = "LIST_SUBSCRIPTIONS"
 
 class TopicType(Enum):
     level1 = "level1"
@@ -45,23 +41,18 @@ class TopicType(Enum):
     userOrderEvents = "userOrderEvents"
     unknown = ("unknown",)
 
-
 def now_ms():
     return round(time.time() * 1000)
-
 
 async def send_ws_message(websocket: websockets.WebSocketClientProtocol, message: dict):
     str_message = json.dumps(message)
     logger.debug(f"Sending message {str_message}")
     await websocket.send(str_message)
 
-
 async def send_ping(websocket: websockets.WebSocketClientProtocol):
     while True:
-        ping_message = {"id": f"{now_ms()}", "type": f"{MessageType.PING}"}
-        await send_ws_message(websocket, ping_message)
-        await asyncio.sleep(1)  # Send a ping every 10 seconds
-
+        await websocket.ping()
+        await asyncio.sleep(10)  # Send a ping every 10 seconds
 
 class WebSocketClient:
     def __init__(self, url, account_id, jwt_token):
@@ -162,7 +153,7 @@ class WebSocketClient:
     async def run_websocket_client(self):
         params = {"accountId": self.account_id, "token": self.jwt_token}
         query_string = urlencode(params)
-        uri = urljoin(self.url.replace("http", "ws"), "/ws?" + query_string)
+        uri = urljoin(self.url.replace("http", "ws"), "/ws/v1?" + query_string)
         reconnect_delay = 5
         while True:
             try:
@@ -211,8 +202,8 @@ class WebSocketClient:
         topic = f"{topic.value}:{market_id}"
         subscription_message = {
             "id": f"subscribe-${now_ms()}",
-            "type": f"{MessageType.REQUEST.value}",
-            "method": f"{RequestMethod.SUBSCRIBE.value}",
+            "method": f"{MessageType.REQUEST.value}",
+            "type": f"{RequestMethod.SUBSCRIBE.value}",
             "response": False,
             "topic": topic,
         }
@@ -221,26 +212,30 @@ class WebSocketClient:
     async def unsubscribe_from_market(self, market_id: str, topic: TopicType):
         topic = f"{topic.value}:{market_id}"
         unsubscription_message = {
-            "id": f"subscribe-${now_ms()}",
-            "type": f"{MessageType.REQUEST.value}",
-            "method": f"{RequestMethod.UNSUBSCRIBE.value}",
+            "id": f"unsubscribe-${now_ms()}",
+            "method": f"{MessageType.REQUEST.value}",
+            "type": f"{RequestMethod.UNSUBSCRIBE.value}",
             "response": False,
             "topic": topic,
         }
         await send_ws_message(self.socket, unsubscription_message)
 
     async def list_subscriptions(self):
-        unsubscription_message = {
+        list_subscriptions_message = {
             "id": f"listSubscriptions-{now_ms()}",
-            "type": f"{MessageType.REQUEST.value}",
-            "method": f"{RequestMethod.LIST_SUBSCRIPTIONS.value}",
+            "method": f"{MessageType.REQUEST.value}",
+            "type": f"{RequestMethod.LIST_SUBSCRIPTIONS.value}",
             "response": False,
         }
         fut = asyncio.Future()
-        self.requests[unsubscription_message["id"]] = fut
-        await send_ws_message(self.socket, unsubscription_message)
-        result = await asyncio.wait_for(fut, timeout=10)
-        return result
+        self.requests[list_subscriptions_message["id"]] = fut
+        await send_ws_message(self.socket, list_subscriptions_message)
+        try:
+            result = await asyncio.wait_for(fut, timeout=10)
+            return result
+        except asyncio.TimeoutError:
+            print("List subscriptions request timed out")
+            return None
 
     def on(self, event: WebSocketClientEvent, handler=None):
         def set_handler(h):
